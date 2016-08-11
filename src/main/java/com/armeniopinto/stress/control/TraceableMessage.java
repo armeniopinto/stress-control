@@ -29,18 +29,24 @@ public abstract class TraceableMessage extends Message {
 	@Override
 	public int hashCode() {
 		int result = 17;
-		result = 37 * result + super.hashCode();
-		result = 37 * result + id.hashCode();
+		result = 31 * result + super.hashCode();
+		result = 31 * result + hashCode(id);
 		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj != null && obj instanceof TraceableMessage) {
+		boolean result = false;
+		if (obj instanceof TraceableMessage) {
 			final TraceableMessage other = (TraceableMessage) obj;
-			return super.equals(other) && other.id.equals(this.id);
+			result = other.canEqual(this) && super.equals(other) && equalsOrNull(other.id, this.id);
 		}
-		return false;
+		return result;
+	}
+
+	@Override
+	public boolean canEqual(final Object obj) {
+		return obj instanceof TraceableMessage;
 	}
 
 }

@@ -28,6 +28,12 @@ public abstract class Message {
 	private final Map<String, Object> data;
 
 	protected Message(final String type, final Map<String, Object> data) {
+		if (type == null) {
+			throw new IllegalArgumentException("type=null");
+		}
+		if (data == null) {
+			throw new IllegalArgumentException("data=null");
+		}
 		this.type = type;
 		this.data = data;
 	}
@@ -46,16 +52,29 @@ public abstract class Message {
 
 	@Override
 	public int hashCode() {
-		return 17 + type.hashCode() * 31 + data.hashCode();
+		int result = 17;
+		result = 31 * result + hashCode(type);
+		result = 31 * result + hashCode(data);
+		return result;
+	}
+
+	protected static int hashCode(final Object obj) {
+		return obj != null ? obj.hashCode() : 0;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj != null && obj instanceof Message) {
+		boolean result = false;
+		if (obj instanceof Message) {
 			final Message other = (Message) obj;
-			return other.type.equals(this.type) && other.data.equals(this.data);
+			result = other.canEqual(this) && equalsOrNull(other.type, this.type)
+					&& equalsOrNull(other.data, this.data);
 		}
-		return false;
+		return result;
+	}
+
+	public boolean canEqual(final Object obj) {
+		return obj instanceof Message;
 	}
 
 	@Override
@@ -70,6 +89,10 @@ public abstract class Message {
 	public static <M> M fromString(final String json, final Class<M> messageClass)
 			throws IOException {
 		return MAPPER.readValue(json, messageClass);
+	}
+
+	protected static boolean equalsOrNull(final Object obj1, final Object obj2) {
+		return (obj1 == null && obj2 == null) || (obj1 != null && obj1.equals(obj2));
 	}
 
 }

@@ -31,12 +31,24 @@ public abstract class Request extends TraceableMessage {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
-		if (obj != null && obj instanceof Request) {
+	public final int hashCode() {
+		return 17 + super.hashCode() * 31 + hashCode(what);
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof Request) {
 			final Request other = (Request) obj;
-			return super.equals(other) && other.what.equals(this.what);
+			result = other.canEqual(this) && super.equals(other)
+					&& equalsOrNull(other.what, this.what);
 		}
-		return false;
+		return result;
+	}
+
+	@Override
+	public final boolean canEqual(final Object obj) {
+		return obj instanceof Request;
 	}
 
 }

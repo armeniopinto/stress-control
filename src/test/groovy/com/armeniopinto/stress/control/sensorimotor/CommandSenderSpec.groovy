@@ -1,3 +1,9 @@
+/**
+ * CommandSenderSpec.java
+ * 
+ * Copyright (C) 2016 by Arménio Pinto
+ * Please read the file LICENSE for the license details.
+ */
 package com.armeniopinto.stress.control.sensorimotor
 
 import spock.lang.*
