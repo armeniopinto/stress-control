@@ -11,6 +11,8 @@ import spock.lang.*
 import nl.jqno.equalsverifier.EqualsVerifier
 import nl.jqno.equalsverifier.Warning
 
+import com.armeniopinto.stress.control.command.Echo
+
 /**
  * Tests {@link Request}.
  * 
@@ -18,9 +20,12 @@ import nl.jqno.equalsverifier.Warning
  */
 class RequestSpec extends Specification {
 
-	def "equals and hashCode methods"() {
+	def "equals() and hashCode() methods"() {
 		when:
-		EqualsVerifier.forClass(Request.class).withRedefinedSuperclass().verify()
+		EqualsVerifier.forClass(Request.class)
+				.withRedefinedSuperclass()
+				.withRedefinedSubclass(Echo.class)
+				.verify()
 
 		then:
 		noExceptionThrown()

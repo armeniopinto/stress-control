@@ -45,7 +45,7 @@ public abstract class TraceableMessage extends Message {
 	}
 
 	@Override
-	public boolean canEqual(final Object obj) {
+	protected boolean canEqual(final Object obj) {
 		return obj instanceof TraceableMessage;
 	}
 

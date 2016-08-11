@@ -1,26 +1,28 @@
 /**
- * MessageSpec.java
+ * GetOrientationSpec.java
  * 
  * Copyright (C) 2016 by Arménio Pinto
  * Please read the file LICENSE for the license details.
  */
-package com.armeniopinto.stress.control
+package com.armeniopinto.stress.control.sensorimotor.command
 
 import spock.lang.*
 
 import nl.jqno.equalsverifier.EqualsVerifier
 import nl.jqno.equalsverifier.Warning
 
+import com.armeniopinto.stress.control.command.TchauAck
+
 /**
- * Tests {@link Message}.
+ * Tests {@link GetOrientation}.
  * 
  * @author armenio.pinto
  */
-class MessageSpec extends Specification {
+class GetOrientationSpec extends Specification {
 
 	def "equals() and hashCode() methods"() {
 		when:
-		EqualsVerifier.forClass(Message.class).withRedefinedSubclass(Request.class).verify()
+		EqualsVerifier.forClass(GetOrientation.class).withRedefinedSuperclass().verify()
 
 		then:
 		noExceptionThrown()

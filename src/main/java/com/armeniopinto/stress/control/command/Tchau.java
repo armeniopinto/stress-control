@@ -19,4 +19,24 @@ public class Tchau extends Request {
 		super(Tchau.class.getSimpleName());
 	}
 
+	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof Tchau) {
+			result = ((Tchau) obj).canEqual(this) && super.equals(obj);
+		}
+
+		return result;
+	}
+
+	@Override
+	protected final boolean canEqual(final Object obj) {
+		return obj instanceof Tchau;
+	}
+
 }

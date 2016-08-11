@@ -18,7 +18,7 @@ import nl.jqno.equalsverifier.Warning
  */
 class TraceableMessageSpec extends Specification {
 
-	def "equals and hashCode methods"() {
+	def "equals() and hashCode() methods"() {
 		when:
 		EqualsVerifier.forClass(TraceableMessage.class)
 				.withRedefinedSuperclass()

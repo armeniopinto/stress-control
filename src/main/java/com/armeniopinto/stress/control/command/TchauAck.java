@@ -23,4 +23,24 @@ public class TchauAck extends Response {
 		super(id, data);
 	}
 
+	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof TchauAck) {
+			result = ((TchauAck) obj).canEqual(this) && super.equals(obj);
+		}
+
+		return result;
+	}
+
+	@Override
+	protected final boolean canEqual(final Object obj) {
+		return obj instanceof TchauAck;
+	}
+
 }

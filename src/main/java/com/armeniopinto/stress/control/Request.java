@@ -31,12 +31,12 @@ public abstract class Request extends TraceableMessage {
 	}
 
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		return 17 + super.hashCode() * 31 + hashCode(what);
 	}
 
 	@Override
-	public final boolean equals(final Object obj) {
+	public boolean equals(final Object obj) {
 		boolean result = false;
 		if (obj instanceof Request) {
 			final Request other = (Request) obj;
@@ -47,7 +47,7 @@ public abstract class Request extends TraceableMessage {
 	}
 
 	@Override
-	public final boolean canEqual(final Object obj) {
+	protected boolean canEqual(final Object obj) {
 		return obj instanceof Request;
 	}
 

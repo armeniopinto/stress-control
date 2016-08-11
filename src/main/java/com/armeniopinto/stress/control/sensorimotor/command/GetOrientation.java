@@ -17,4 +17,24 @@ public class GetOrientation extends Request {
 		super(GetOrientation.class.getSimpleName());
 	}
 
+	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof GetOrientation) {
+			result = ((GetOrientation) obj).canEqual(this) && super.equals(obj);
+		}
+
+		return result;
+	}
+
+	@Override
+	protected final boolean canEqual(final Object obj) {
+		return obj instanceof GetOrientation;
+	}
+
 }

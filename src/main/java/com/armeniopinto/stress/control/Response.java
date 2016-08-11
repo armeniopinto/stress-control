@@ -21,4 +21,24 @@ public class Response extends TraceableMessage {
 		super(MESSAGE_TYPE, id, data);
 	}
 
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof Response) {
+			result = ((Response) obj).canEqual(this) && super.equals(obj);
+		}
+
+		return result;
+	}
+
+	@Override
+	protected boolean canEqual(final Object obj) {
+		return obj instanceof Response;
+	}
+
 }

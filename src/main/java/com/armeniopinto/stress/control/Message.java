@@ -73,7 +73,7 @@ public abstract class Message {
 		return result;
 	}
 
-	public boolean canEqual(final Object obj) {
+	protected boolean canEqual(final Object obj) {
 		return obj instanceof Message;
 	}
 

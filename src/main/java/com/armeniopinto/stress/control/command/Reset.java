@@ -19,4 +19,24 @@ public class Reset extends Request {
 		super(Reset.class.getSimpleName());
 	}
 
+	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof Reset) {
+			result = ((Reset) obj).canEqual(this) && super.equals(obj);
+		}
+
+		return result;
+	}
+
+	@Override
+	protected final boolean canEqual(final Object obj) {
+		return obj instanceof Reset;
+	}
+
 }
