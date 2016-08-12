@@ -46,7 +46,7 @@ public class Orientation {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		int hash = 17;
 		hash = hash * 31 + yaw;
 		hash = hash * 31 + pitch;
@@ -54,7 +54,7 @@ public class Orientation {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (obj != null && obj instanceof Orientation) {
 			final Orientation other = (Orientation) obj;
 			return other.yaw == this.yaw && other.pitch == this.pitch && other.roll == this.roll;
@@ -63,7 +63,7 @@ public class Orientation {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return String.format("yaw=%d, pitch=%d, roll=%d", yaw, pitch, roll);
 	}
 
