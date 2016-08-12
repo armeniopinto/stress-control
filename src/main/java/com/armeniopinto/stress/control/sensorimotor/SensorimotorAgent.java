@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,32 +86,32 @@ public class SensorimotorAgent implements HealthIndicator {
 
 	@GetMapping("/orientation")
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<Orientation> getOrientation() {
+	public Orientation getOrientation() throws SensorimotorException {
 		try {
 			final Future<Response> response = broker.sendRequest(sender, new GetOrientation());
-			return new ResponseEntity<Orientation>(
-					new Orientation(
-							(Map<String, Object>) response.get().getData().get("orientation")),
-					HttpStatus.OK);
-		} catch (final Exception e) {
-			LOGGER.warn("Failed to retrieve sensorimotor orientation.", e);
-			return new ResponseEntity<Orientation>(HttpStatus.INTERNAL_SERVER_ERROR);
+			return new Orientation(
+					(Map<String, Object>) response.get().getData().get("orientation"));
+		} catch (final Exception ioe) {
+			throw new SensorimotorException("Failed to retrieve sensorimotor orientation.", ioe);
 		}
 	}
 
 	@PostMapping("/reset")
-	public ResponseEntity<HttpStatus> reset() {
+	public void reset() throws SensorimotorException {
 		try {
 			LOGGER.info("Resetting the sensorimotor component...");
 			sender.send(new Reset());
-			return new ResponseEntity<HttpStatus>(HttpStatus.OK);
 		} catch (final IOException ioe) {
-			return new ResponseEntity<HttpStatus>(HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new SensorimotorException("Failed to reset the sensorimotor component.", ioe);
 		}
 	}
 
 	@PreDestroy
 	public void stop() throws IOException {
+		if (!running) {
+			throw new IllegalStateException("Already stopped.");
+		}
+
 		LOGGER.debug("Preparing to stop sensorimotor agent...");
 		running = false;
 
