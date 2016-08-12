@@ -21,4 +21,24 @@ public class Event extends Message {
 		super(MESSAGE_TYPE, data);
 	}
 
+	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		boolean result = false;
+		if (obj instanceof Event) {
+			result = ((Event) obj).canEqual(this) && super.equals(obj);
+		}
+
+		return result;
+	}
+
+	@Override
+	protected final boolean canEqual(final Object obj) {
+		return obj instanceof Event;
+	}
+
 }
