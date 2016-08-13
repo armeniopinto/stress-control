@@ -8,8 +8,6 @@ package com.armeniopinto.stress.control.sensorimotor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -37,25 +35,31 @@ public class MessageListener {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MessageListener.class);
 
 	@Autowired
-	@Qualifier("sensorimotorInputStream")
-	private InputStream in;
+	@Qualifier("sensorimotorReader")
+	private BufferedReader reader;
 
 	@Autowired
 	private MessageBroker broker;
 
+	private boolean listening = false;
+
+	public boolean isListening() {
+		return listening;
+	}
+
 	@Async
 	public void listen() throws IOException {
-		final InputStreamReader reader = new InputStreamReader(in);
-		final BufferedReader bufferedReader = new BufferedReader(reader);
-
 		LOGGER.info("Sensorimotor message listener started.");
+		listening = true;
 		String message;
-		while ((message = bufferedReader.readLine()) != null) {
+		while ((message = reader.readLine()) != null) {
+			System.out.println(message);
 			LOGGER.trace("<-- " + message);
 			try {
 				final Message received = buildMessage(message);
 				if (received instanceof TchauAck) {
 					LOGGER.debug("Sensorimotor acknowledged shutdown.");
+					listening = false;
 					break;
 				} else {
 					broker.handle(received);
@@ -64,19 +68,6 @@ public class MessageListener {
 				LOGGER.warn("Error parsing sensorimotor message.", t);
 			}
 		}
-
-		try {
-			bufferedReader.close();
-		} catch (final IOException ioe) {
-			LOGGER.warn("Failed to close sensorimotor buffered reader.", ioe);
-		} finally {
-			try {
-				reader.close();
-			} catch (final IOException ioe) {
-				LOGGER.warn("Failed to close sensorimotor reader.", ioe);
-			}
-		}
-
 		LOGGER.info("Sensorimotor message listener stopped.");
 	}
 
@@ -90,8 +81,7 @@ public class MessageListener {
 		case Response.MESSAGE_TYPE:
 			return new Response((String) raw.get("id"), (Map<String, Object>) raw.get("data"));
 		case TchauAck.MESSAGE_TYPE:
-			return new TchauAck((String) raw.get("id"),
-					(Map<String, Object>) raw.get("data"));
+			return new TchauAck((String) raw.get("id"), (Map<String, Object>) raw.get("data"));
 		default:
 			throw new IOException(String.format("Unknown message type '%s'.", raw.get("type")));
 		}

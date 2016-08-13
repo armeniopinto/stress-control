@@ -6,8 +6,9 @@
  */
 package com.armeniopinto.stress.control.sensorimotor;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Enumeration;
 
@@ -99,9 +100,10 @@ public class SensorimotorConfig {
 		}
 	}
 
-	@Bean(name = "sensorimotorInputStream")
-	public InputStream serialPortInputStream(@Autowired final SerialPort port) throws IOException {
-		return port.getInputStream();
+	@Bean(name = "sensorimotorReader", destroyMethod = "close")
+	public BufferedReader serialPortInputStream(@Autowired final SerialPort port)
+			throws IOException {
+		return new BufferedReader(new InputStreamReader(port.getInputStream()));
 	}
 
 	@Bean(name = "sensorimotorOutputStream")
