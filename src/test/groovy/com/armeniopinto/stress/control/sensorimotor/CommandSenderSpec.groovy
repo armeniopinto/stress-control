@@ -35,7 +35,8 @@ class CommandSenderSpec extends Specification {
 	}
 
 
-	def "Sending a command that serialises to less than or 64 bytes"(String json, int length) {
+	@Unroll("Sending a command that serialises to #length bytes")
+	def "Sending commands that serialise to various sizes"(String json, int length) {
 		setup:
 		def Request command = Mock() {
 			2 * toString() >> json
