@@ -34,6 +34,7 @@ class MessageListenerSpec extends Specification {
 	}
 
 
+	@Unroll("Received #expectedClass messages are handled by the message broker")
 	def "Receiving messages to be handled by the message broker"(json, expectedClass) {
 		given: "the reception of a message"
 		listener.reader.readLine() >>> [json, TCHAU_ACK_MESSAGE]
