@@ -53,7 +53,6 @@ public class MessageListener {
 		listening = true;
 		String message;
 		while ((message = reader.readLine()) != null) {
-			System.out.println(message);
 			LOGGER.trace("<-- " + message);
 			try {
 				final Message received = buildMessage(message);
