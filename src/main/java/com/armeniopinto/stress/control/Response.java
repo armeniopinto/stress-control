@@ -21,6 +21,10 @@ public class Response extends TraceableMessage {
 		super(MESSAGE_TYPE, id, data);
 	}
 
+	protected Response(final String type, final String id, final Map<String, Object> data) {
+		super(type, id, data);
+	}
+
 	@Override
 	public int hashCode() {
 		return super.hashCode();

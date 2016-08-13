@@ -20,7 +20,7 @@ public class TchauAck extends Response {
 	public static final String MESSAGE_TYPE = "TchauAck";
 
 	public TchauAck(final String id, final Map<String, Object> data) {
-		super(id, data);
+		super(MESSAGE_TYPE, id, data);
 	}
 
 	@Override
