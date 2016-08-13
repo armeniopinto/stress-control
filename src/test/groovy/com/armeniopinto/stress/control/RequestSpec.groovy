@@ -11,6 +11,8 @@ import spock.lang.*
 import nl.jqno.equalsverifier.EqualsVerifier
 import nl.jqno.equalsverifier.Warning
 
+import com.armeniopinto.stress.control.command.Echo
+
 /**
  * Tests {@link Request}.
  * 
