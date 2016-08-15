@@ -27,7 +27,7 @@ import com.armeniopinto.stress.control.RequestSender;
  * @author armenio.pinto
  */
 @Component
-public class CommandSender implements RequestSender {
+class CommandSender implements RequestSender {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommandSender.class);
 

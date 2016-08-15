@@ -12,7 +12,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 import com.armeniopinto.stress.control.Event
-import com.armeniopinto.stress.control.MessageBroker
+import com.armeniopinto.stress.control.EventHandler
 import com.armeniopinto.stress.control.Response
 import com.armeniopinto.stress.control.command.TchauAck
 
@@ -30,31 +30,34 @@ class MessageListenerSpec extends Specification {
 	def setup() {
 		listener = new MessageListener()
 		listener.reader = Stub(BufferedReader)
-		listener.broker = Mock(MessageBroker)
+		listener.agent = Mock(SensorimotorAgent)
+		listener.events = Mock(EventHandler)
 	}
 
 
-	@Unroll("Received #expectedClass messages are handled by the message broker")
-	def "Receiving messages to be handled by the message broker"(json, expectedClass) {
-		given: "the reception of a message"
+	def "Received responses are handled by the agent"() {
+		given: "the reception of a response"
+		def json = '{"type":"Response","id":"1234567","data":{"some":"Data"}}'
 		listener.reader.readLine() >>> [json, TCHAU_ACK_MESSAGE]
-		def capturedClass
 
 		when: "we listen for messages"
 		listener.listen()
 
-		then: "the broker must be asked to handle the expected deserialised message"
-		1 * listener.broker.handle(_) >> { args ->
-			capturedClass = args[0].class
-		}
+		then: "the agent must be asked to handle the expected deserialised response"
+		1 * listener.agent.handleResponse(_ as Response)
+	}
 
-		and: "the deserialised message must be of the expected type"
-		capturedClass == expectedClass
 
-		where:
-		json || expectedClass
-		'{"type":"Event","data":{"some":"Data"}}' | Event.class
-		'{"type":"Response","id":"1234567","data":{"some":"Data"}}' | Response.class
+	def "Received events are handled by the event handler"() {
+		given: "the reception of an event"
+		def json = '{"type":"Event","data":{"some":"Data"}}'
+		listener.reader.readLine() >>> [json, TCHAU_ACK_MESSAGE]
+
+		when: "we listen for messages"
+		listener.listen()
+
+		then: "the event handler must be asked to handle the expected deserialised event"
+		1 * listener.events.handle(_ as Event)
 	}
 
 

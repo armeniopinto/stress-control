@@ -7,55 +7,151 @@
 package com.armeniopinto.stress.control.sensorimotor;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PreDestroy;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.Lifecycle;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
 
-import com.armeniopinto.stress.control.MessageBroker;
+import com.armeniopinto.stress.control.Request;
 import com.armeniopinto.stress.control.Response;
 import com.armeniopinto.stress.control.command.Echo;
-import com.armeniopinto.stress.control.command.Reset;
 import com.armeniopinto.stress.control.command.Tchau;
-import com.armeniopinto.stress.control.sensorimotor.command.GetOrientation;
 
 /**
  * Maintains the status of the sensorimotor component and exposes a rest API to use it.
  * 
  * @author armenio.pinto
  */
-@RestController("sensorimotor")
-@RequestMapping("/sensorimotor")
-public class SensorimotorAgent implements HealthIndicator {
+@Component
+public class SensorimotorAgent implements Lifecycle {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SensorimotorAgent.class);
 
 	@Autowired
-	private CommandSender sender;
+	@Qualifier("stressExecutor")
+	private AsyncTaskExecutor executor;
 
 	@Autowired
-	private MessageBroker broker;
+	private CommandSender sender;
 
-	@Value("${stress.sensorimotor.keep_alive_period}")
+	@Value("${stress.request.timeout:5000}")
+	private long timeout;
+
+	private final Map<String, ReceivedResponse> responses;
+
+	@Value("${stress.sensorimotor.keep_alive_period:5000}")
 	private long period;
 
-	private boolean running = false;
+	private boolean running, alive;
 
-	private boolean alive = false;
+	public SensorimotorAgent() {
+		responses = new HashMap<>();
+	}
+
+	@Override
+	public void start() {
+		running = alive = false;
+	}
+
+	@Override
+	public void stop() {
+		if (!running) {
+			throw new IllegalStateException("Already stopped.");
+		}
+
+		LOGGER.debug("Preparing to stop sensorimotor agent...");
+		running = false;
+
+		// Shutdown handshake:
+		try {
+			sender.send(new Tchau());
+		} catch (final IOException ioe) {
+			LOGGER.warn("Failed to send the shutdown command.", ioe);
+		}
+	}
+
+	@Override
+	public boolean isRunning() {
+		return running;
+	}
+
+	public synchronized Response sendCommand(final Request command) throws IOException {
+		final Future<Response> response = executor.submit(() -> {
+			final long start = System.currentTimeMillis();
+			sender.send(command);
+
+			final String id = command.getId();
+			while (System.currentTimeMillis() - start < timeout) {
+				synchronized (responses) {
+					if (responses.containsKey(id)) {
+						return responses.remove(id).response;
+					} else {
+						responses.wait(timeout - (System.currentTimeMillis() - start));
+					}
+				}
+			}
+			throw new TimeoutException(
+					String.format("Response didn't arrive within %d milliseconds.", timeout));
+		});
+
+		try {
+			return response.get();
+		} catch (final InterruptedException | ExecutionException e) {
+			throw new IOException(e); // XXX: refactor.
+		}
+	}
+
+	void handleResponse(final Response response) {
+		synchronized (responses) {
+			responses.put(response.getId(), new ReceivedResponse(response));
+			responses.notifyAll();
+		}
+		executor.execute(() -> {
+			cleanResponses();
+		});
+	}
+
+	/** Goes through the received responses buffer and removes the ones left there for too long. */
+	private void cleanResponses() {
+		synchronized (responses) {
+			responses.entrySet().removeIf((entry) -> {
+				if (System.currentTimeMillis() - entry.getValue().timestamp > timeout * 1.5) {
+					LOGGER.info(String.format("Response %s timed-out.", entry.getKey()));
+					return true;
+				}
+				return false;
+			});
+		}
+	}
+
+	private class ReceivedResponse {
+
+		public final Response response;
+
+		public final long timestamp;
+
+		public ReceivedResponse(final Response response) {
+			this.response = response;
+			timestamp = System.currentTimeMillis();
+		}
+	}
+
+	public boolean isAlive() {
+		return alive;
+	}
 
 	@Async
 	public void keepAlive() {
@@ -65,7 +161,7 @@ public class SensorimotorAgent implements HealthIndicator {
 		LOGGER.info("Sensorimotor agent started.");
 		while (running) {
 			try {
-				broker.sendRequest(sender, new Echo()).get();
+				sendCommand(new Echo());
 				alive = true;
 				LOGGER.debug("Sensorimotor component alive.");
 				TimeUnit.MILLISECONDS.sleep(period);
@@ -77,46 +173,6 @@ public class SensorimotorAgent implements HealthIndicator {
 			}
 		}
 		LOGGER.info("Sensorimotor agent stopped.");
-	}
-
-	@Override
-	public Health health() {
-		return alive ? Health.up().build() : Health.down().build();
-	}
-
-	@GetMapping("/orientation")
-	@SuppressWarnings("unchecked")
-	public Orientation getOrientation() throws SensorimotorException {
-		try {
-			final Future<Response> response = broker.sendRequest(sender, new GetOrientation());
-			return new Orientation(
-					(Map<String, Object>) response.get().getData().get("orientation"));
-		} catch (final Exception ioe) {
-			throw new SensorimotorException("Failed to retrieve sensorimotor orientation.", ioe);
-		}
-	}
-
-	@PostMapping("/reset")
-	public void reset() throws SensorimotorException {
-		try {
-			LOGGER.info("Resetting the sensorimotor component...");
-			sender.send(new Reset());
-		} catch (final IOException ioe) {
-			throw new SensorimotorException("Failed to reset the sensorimotor component.", ioe);
-		}
-	}
-
-	@PreDestroy
-	public void stop() throws IOException {
-		if (!running) {
-			throw new IllegalStateException("Already stopped.");
-		}
-
-		LOGGER.debug("Preparing to stop sensorimotor agent...");
-		running = false;
-
-		// Shutdown handshake:
-		sender.send(new Tchau());
 	}
 
 }

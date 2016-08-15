@@ -19,8 +19,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.armeniopinto.stress.control.Event;
+import com.armeniopinto.stress.control.EventHandler;
 import com.armeniopinto.stress.control.Message;
-import com.armeniopinto.stress.control.MessageBroker;
 import com.armeniopinto.stress.control.Response;
 import com.armeniopinto.stress.control.command.TchauAck;
 
@@ -35,11 +35,14 @@ public class MessageListener {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MessageListener.class);
 
 	@Autowired
-	@Qualifier("sensorimotorReader")
-	private BufferedReader reader;
+	private EventHandler events;
 
 	@Autowired
-	private MessageBroker broker;
+	private SensorimotorAgent agent;
+
+	@Autowired
+	@Qualifier("sensorimotorReader")
+	private BufferedReader reader;
 
 	private boolean listening = false;
 
@@ -60,8 +63,10 @@ public class MessageListener {
 					LOGGER.debug("Sensorimotor acknowledged shutdown.");
 					listening = false;
 					break;
+				} else if (received instanceof Response) {
+					agent.handleResponse((Response) received);
 				} else {
-					broker.handle(received);
+					events.handle((Event) received);
 				}
 			} catch (final Throwable t) {
 				LOGGER.warn("Error parsing sensorimotor message.", t);

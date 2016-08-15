@@ -16,7 +16,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 public class AppConfig {
 
-	@Bean(destroyMethod = "shutdown")
+	@Bean(name = "stressExecutor", destroyMethod = "shutdown")
 	public ThreadPoolTaskExecutor taskExecutor() {
 		final ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
 		pool.setCorePoolSize(4);
