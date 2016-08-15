@@ -8,9 +8,6 @@ package com.armeniopinto.stress.control.sensorimotor
 
 import spock.lang.*
 
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-
 import com.armeniopinto.stress.control.Event
 import com.armeniopinto.stress.control.EventHandler
 import com.armeniopinto.stress.control.Response
@@ -69,7 +66,7 @@ class MessageListenerSpec extends Specification {
 		listener.listen()
 
 		then: "the message listener shouldn't be listening"
-		!listener.listening
+		!listener.running
 	}
 
 
@@ -81,7 +78,7 @@ class MessageListenerSpec extends Specification {
 		listener.buildMessage(json)
 
 		then: "an IOException must be thrown"
-		thrown(IOException)
+		thrown(SensorimotorException)
 	}
 
 

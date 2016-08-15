@@ -17,6 +17,10 @@ public class SensorimotorException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
+	public SensorimotorException(final String message) {
+		super(message);
+	}
+
 	public SensorimotorException(final String message, final Throwable cause) {
 		super(message, cause);
 	}

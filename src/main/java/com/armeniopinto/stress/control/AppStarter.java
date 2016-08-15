@@ -11,38 +11,21 @@ import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableAsync;
-
-import com.armeniopinto.stress.control.sensorimotor.MessageListener;
-import com.armeniopinto.stress.control.sensorimotor.SensorimotorAgent;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * @author armenio.pinto
  */
 @SpringBootApplication
-@EnableAsync(proxyTargetClass = true)
-public class AppStarter implements CommandLineRunner {
+@EnableScheduling
+public class AppStarter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AppStarter.class);
 
-	@Autowired
-	private MessageListener listener;
-
-	@Autowired
-	private SensorimotorAgent agent;
-
 	public static void main(final String[] args) {
 		SpringApplication.run(AppStarter.class, args);
-	}
-
-	@Override
-	public void run(final String... args) throws Exception {
-		listener.listen();
-		agent.keepAlive();
 	}
 
 	@PreDestroy

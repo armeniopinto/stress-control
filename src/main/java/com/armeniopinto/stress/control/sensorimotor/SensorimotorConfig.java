@@ -8,9 +8,11 @@ package com.armeniopinto.stress.control.sensorimotor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Enumeration;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +42,23 @@ public class SensorimotorConfig {
 
 	@Bean(name = "sensorimotorSerialPort", destroyMethod = "close")
 	public SerialPort serialPort() throws IOException {
-		final SerialPort port;
-		try {
-			final CommPortIdentifier id = findSerialPort();
-			LOGGER.debug(String.format("Using serial port '%s'.", id.getName()));
+		final CommPortIdentifier id = findSerialPort();
+		LOGGER.debug(String.format("Using serial port '%s'.", id.getName()));
 
-			port = openSerialPort(id);
-			LOGGER.info("Connected to the sensorimotor component.");
-		} catch (final IOException ioe) {
-			throw new IOException("Error connecting to the sensorimotor component.", ioe);
+		final SerialPort port = openSerialPort(id);
+		try {
+			TimeUnit.MILLISECONDS.sleep(2000L);
+		} catch (final InterruptedException ie) {
+			LOGGER.warn("Failed to sleep!", ie);
+		}
+		LOGGER.info("Connected to the sensorimotor component.");
+
+		// Drains any initialisation messages:
+		final InputStream in = port.getInputStream();
+		final int available = in.available();
+		if (available > 0) {
+			in.skip(available);
+			LOGGER.debug(String.format("%d bytes discarded from sensorimotor stream.", available));
 		}
 
 		return port;
