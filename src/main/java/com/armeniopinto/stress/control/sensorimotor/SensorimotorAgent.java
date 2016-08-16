@@ -8,7 +8,6 @@ package com.armeniopinto.stress.control.sensorimotor;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
@@ -33,7 +32,7 @@ import com.armeniopinto.stress.control.command.Reset;
 import com.armeniopinto.stress.control.command.Tchau;
 
 /**
- * Maintains the status of the sensorimotor component and exposes a rest API to use it.
+ * Implements communication with the sensorimotor component and maintains its status.
  * 
  * @author armenio.pinto
  */
@@ -52,7 +51,7 @@ public class SensorimotorAgent implements Lifecycle {
 	@Value("${stress.request.timeout:5000}")
 	private long timeout;
 
-	private final MutableObject<Response> receivedHolder = new MutableObject<>();
+	private final MutableObject<Response> responseHolder = new MutableObject<>();
 
 	private boolean running = false, alive = false;
 
@@ -91,23 +90,21 @@ public class SensorimotorAgent implements Lifecycle {
 	}
 
 	public synchronized Response sendCommand(final Request command) throws SensorimotorException {
-		final Future<Response> response = executor.submit(() -> {
-			synchronized (receivedHolder) {
-				sender.send(command);
-				receivedHolder.wait(timeout);
-				final Response receivedResponse = receivedHolder.getValue();
-				if (receivedResponse != null) {
-					receivedHolder.setValue(null);
-					return receivedResponse;
-				} else {
-					throw new TimeoutException(String
-							.format("Response didn't arrive within %d milliseconds.", timeout));
-				}
-			}
-		});
-
 		try {
-			return response.get();
+			return executor.submit(() -> {
+				synchronized (responseHolder) {
+					sender.send(command);
+					responseHolder.wait(timeout);
+					final Response response = responseHolder.getValue();
+					if (response != null) {
+						responseHolder.setValue(null);
+						return response;
+					} else {
+						throw new TimeoutException();
+					}
+				}
+			}).get();
+
 		} catch (final InterruptedException | ExecutionException e) {
 			throw new SensorimotorException(
 					String.format("Failed to run sensorimotor command: %s", command.toString()), e);
@@ -115,9 +112,9 @@ public class SensorimotorAgent implements Lifecycle {
 	}
 
 	void handleResponse(final Response response) {
-		synchronized (receivedHolder) {
-			receivedHolder.setValue(response);
-			receivedHolder.notify();
+		synchronized (responseHolder) {
+			responseHolder.setValue(response);
+			responseHolder.notify();
 		}
 	}
 
