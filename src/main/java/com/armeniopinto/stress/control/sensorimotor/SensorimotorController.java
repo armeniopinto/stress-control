@@ -28,7 +28,7 @@ import com.armeniopinto.stress.control.sensorimotor.command.GetOrientation;
 import com.armeniopinto.stress.control.sensorimotor.command.Go;
 import com.armeniopinto.stress.control.sensorimotor.command.Stop;
 
-@RestController("sensorimotor")
+@RestController
 @RequestMapping("/sensorimotor")
 public class SensorimotorController implements HealthIndicator {
 
