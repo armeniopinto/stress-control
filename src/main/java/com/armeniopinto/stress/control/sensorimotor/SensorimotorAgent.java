@@ -122,7 +122,7 @@ public class SensorimotorAgent implements Lifecycle {
 		return alive;
 	}
 
-	@Scheduled(fixedDelay = 5000L)
+	@Scheduled(fixedDelayString = "${stress.sensorimotor.keep_alive_period:5000}")
 	public void keepAlive() {
 		try {
 			sendCommand(new Echo());
