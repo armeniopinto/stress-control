@@ -1,3 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+pom.xml
+
+Copyright (C) 2016 by Arménio Pinto
+Please read the file LICENSE for the license details.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
@@ -7,6 +14,14 @@
 	<artifactId>stress-control</artifactId>
 	<version>develop-SNAPSHOT</version>
 	<name>stress-control</name>
+
+	<repositories>
+		<repository>
+			<id>git-armeniopinto</id>
+			<name>Arménio Pinto's Git-based repo</name>
+			<url>https://github.com/armeniopinto/maven-repo/raw/master/</url>
+		</repository>
+	</repositories>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -23,6 +38,7 @@
 		<equalsverifier.version>2.1.5</equalsverifier.version>
 		<groovy-eclipse-compiler.version>2.9.2-01</groovy-eclipse-compiler.version>
 		<groovy-eclipse-batch.version>2.4.3-01</groovy-eclipse-batch.version>
+		<maven-nativedependencies-plugin.version>0.0.7</maven-nativedependencies-plugin.version>
 	</properties>
 
 	<dependencies>
@@ -51,16 +67,12 @@
 			<groupId>org.rxtx</groupId>
 			<artifactId>rxtx</artifactId>
 			<version>${rxtx.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/rxtx/${rxtx.version}/RXTXcomm.jar</systemPath>
 		</dependency>
 
 		<dependency>
 			<groupId>org.opencv</groupId>
 			<artifactId>opencv</artifactId>
 			<version>${opencv.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/opencv/${opencv.version}/opencv-310.jar</systemPath>
 		</dependency>
 
 		<dependency>
@@ -153,14 +165,32 @@
 				</configuration>
 			</plugin>
 
+			<!-- Unpacks the native libraries to target/natives. -->
+			<plugin>
+				<groupId>com.googlecode.mavennatives</groupId>
+				<artifactId>maven-nativedependencies-plugin</artifactId>
+				<version>${maven-nativedependencies-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>unpacknatives</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<separateDirs>true</separateDirs>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<includeSystemScope>true</includeSystemScope>
+					<excludeArtifactIds>rxtx-natives,opencv-natives</excludeArtifactIds>
 				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
 </project>
