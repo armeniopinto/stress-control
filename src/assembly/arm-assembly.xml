@@ -1,0 +1,33 @@
+<assembly>
+	<id>arm</id>
+
+	<formats>
+		<format>zip</format>
+	</formats>
+
+	<files>
+		<file>
+			<source>${project.build.directory}/${project.artifactId}-${version}.jar</source>
+			<outputDirectory>/</outputDirectory>
+			<destName>${project.artifactId}.jar</destName>
+		</file>
+		<file>
+			<source>src/assembly/shell/${project.artifactId}.sh</source>
+			<outputDirectory>/</outputDirectory>
+			<destName>${project.artifactId}.sh</destName>
+			<fileMode>754</fileMode>
+			<filtered>true</filtered>
+			<lineEnding>unix</lineEnding>
+		</file>
+	</files>
+
+	<fileSets>
+		<fileSet>
+			<directory>${project.build.directory}/natives/arm</directory>
+			<outputDirectory>/lib</outputDirectory>
+			<excludes>
+				<exclude>META-INF/**</exclude>
+			</excludes>
+		</fileSet>
+	</fileSets>
+</assembly>
