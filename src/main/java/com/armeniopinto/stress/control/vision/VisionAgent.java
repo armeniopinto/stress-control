@@ -9,7 +9,6 @@ package com.armeniopinto.stress.control.vision;
 import static org.opencv.videoio.Videoio.CAP_PROP_FRAME_HEIGHT;
 import static org.opencv.videoio.Videoio.CAP_PROP_FRAME_WIDTH;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -23,6 +22,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 
 import org.springframework.context.Lifecycle;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,6 +38,10 @@ public class VisionAgent implements Lifecycle {
 	private VideoCapture camera;
 
 	private boolean running = false;
+
+	private Mat frame;
+
+	private byte[] frameBytes;
 
 	@PostConstruct
 	@Override
@@ -57,25 +61,17 @@ public class VisionAgent implements Lifecycle {
 		LOGGER.debug(String.format("Camera service started with resolution %dx%d.",
 				(int) camera.get(CAP_PROP_FRAME_WIDTH), (int) camera.get(CAP_PROP_FRAME_HEIGHT)));
 
+		frame = new Mat();
+
 		running = true;
 
 		LOGGER.info("Vision agent started.");
 	}
 
-	public byte[] scanFrame() throws IOException {
-		final Mat image = new Mat();
-		camera.read(image);
-		final MatOfByte imageBytes = new MatOfByte();
-		Imgcodecs.imencode(".jpg", image, imageBytes);
-		final byte[] bytes = imageBytes.toArray();
-		imageBytes.release();
-
-		return bytes;
-	}
-
 	@Override
-	public void stop() {
+	public synchronized void stop() {
 		running = false;
+		frame.release();
 		camera.release();
 		LOGGER.debug("Camera service stopped.");
 		LOGGER.info("Vision agent stopped.");
@@ -84,6 +80,21 @@ public class VisionAgent implements Lifecycle {
 	@Override
 	public boolean isRunning() {
 		return running;
+	}
+
+	@Scheduled(fixedDelay = 143)
+	public synchronized void refresh() {
+		if (running) {
+			camera.read(frame);
+			final MatOfByte readBytes = new MatOfByte();
+			Imgcodecs.imencode(".jpg", frame, readBytes);
+			frameBytes = readBytes.toArray();
+			readBytes.release();
+		}
+	}
+
+	public byte[] scanFrame() {
+		return frameBytes;
 	}
 
 }
