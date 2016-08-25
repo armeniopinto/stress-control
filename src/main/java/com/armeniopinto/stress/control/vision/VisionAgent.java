@@ -6,20 +6,20 @@
  */
 package com.armeniopinto.stress.control.vision;
 
-import static org.opencv.videoio.Videoio.CAP_PROP_FRAME_HEIGHT;
-import static org.opencv.videoio.Videoio.CAP_PROP_FRAME_WIDTH;
-
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
+import static org.opencv.videoio.Videoio.CAP_PROP_FRAME_HEIGHT;
+import static org.opencv.videoio.Videoio.CAP_PROP_FRAME_WIDTH;
 
 import org.springframework.context.Lifecycle;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,11 +37,9 @@ public class VisionAgent implements Lifecycle {
 
 	private VideoCapture camera;
 
-	private boolean running = false;
-
 	private Mat frame;
 
-	private byte[] frameBytes;
+	private boolean running = false;
 
 	@PostConstruct
 	@Override
@@ -50,6 +48,8 @@ public class VisionAgent implements Lifecycle {
 		LOGGER.debug("OpenCV native library loaded.");
 
 		camera = new VideoCapture(0);
+		camera.set(CAP_PROP_FRAME_WIDTH, 320);
+		camera.set(CAP_PROP_FRAME_HEIGHT, 240);
 		try {
 			TimeUnit.MICROSECONDS.sleep(2000L);
 		} catch (final InterruptedException ie) {
@@ -58,22 +58,20 @@ public class VisionAgent implements Lifecycle {
 		if (!camera.isOpened()) {
 			throw new RuntimeException("Unable to open the camera.");
 		}
-		LOGGER.debug(String.format("Camera service started with resolution %dx%d.",
+		frame = new Mat();
+		LOGGER.debug(String.format("Camera service started at %dx%d.",
 				(int) camera.get(CAP_PROP_FRAME_WIDTH), (int) camera.get(CAP_PROP_FRAME_HEIGHT)));
 
-		frame = new Mat();
-
 		running = true;
-
 		LOGGER.info("Vision agent started.");
 	}
 
 	@Override
 	public synchronized void stop() {
-		running = false;
 		frame.release();
 		camera.release();
 		LOGGER.debug("Camera service stopped.");
+		running = false;
 		LOGGER.info("Vision agent stopped.");
 	}
 
@@ -82,7 +80,13 @@ public class VisionAgent implements Lifecycle {
 		return running;
 	}
 
-	@Scheduled(fixedDelay = 143)
+	private byte[] frameBytes;
+
+	public byte[] scanFrame() {
+		return frameBytes;
+	}
+
+	@Scheduled(fixedDelayString = "${stress.vision.refresh_period:33}")
 	public synchronized void refresh() {
 		if (running) {
 			camera.read(frame);
@@ -90,11 +94,24 @@ public class VisionAgent implements Lifecycle {
 			Imgcodecs.imencode(".jpg", frame, readBytes);
 			frameBytes = readBytes.toArray();
 			readBytes.release();
+
+			reportRefreshRate();
 		}
 	}
 
-	public byte[] scanFrame() {
-		return frameBytes;
+	private long time = 0, refreshes = 0;
+
+	private void reportRefreshRate() {
+		refreshes++;
+		if (time == 0) {
+			time = System.currentTimeMillis();
+		} else {
+			if (refreshes % 100 == 0) {
+				LOGGER.debug(String.format("Refresh rate %d frames/s.",
+						(refreshes * 1000) / (System.currentTimeMillis() - time)));
+				time = refreshes = 0;
+			}
+		}
 	}
 
 }
