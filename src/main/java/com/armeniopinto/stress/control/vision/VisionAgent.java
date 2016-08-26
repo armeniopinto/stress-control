@@ -23,7 +23,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 
 /**
- * Implements communication with the sensorimotor component and maintains its status.
+ * Sees.
  * 
  * @author armenio.pinto
  */
@@ -36,21 +36,23 @@ public class VisionAgent implements Lifecycle {
 	@Qualifier("visionDevice")
 	private VideoCapture device;
 
-	private Mat frame;
+	private final Mat capturedFrame = new Mat(), processedFrame = new Mat();
+
+	private final FrameRate fps = new FrameRate();
 
 	private boolean running = false;
 
 	@PostConstruct
 	@Override
 	public void start() {
-		frame = new Mat();
 		running = true;
 		LOGGER.info("Vision agent started.");
 	}
 
 	@Override
 	public synchronized void stop() {
-		frame.release();
+		processedFrame.release();
+		capturedFrame.release();
 		running = false;
 		LOGGER.info("Vision agent stopped.");
 	}
@@ -60,37 +62,25 @@ public class VisionAgent implements Lifecycle {
 		return running;
 	}
 
-	private byte[] frameBytes;
+	public byte[] getCapturedFrame() {
+		final MatOfByte frameBytes = new MatOfByte();
+		synchronized (capturedFrame) {
+			Imgcodecs.imencode(".jpg", capturedFrame, frameBytes);
+		}
+		final byte[] bytes = frameBytes.toArray();
+		frameBytes.release();
 
-	public byte[] scanFrame() {
-		return frameBytes;
+		return bytes;
 	}
 
 	@Scheduled(fixedDelayString = "${stress.vision.refresh_period:33}")
-	public synchronized void refresh() {
+	public void refresh() {
 		if (running) {
-			device.read(frame);
-			final MatOfByte readBytes = new MatOfByte();
-			Imgcodecs.imencode(".jpg", frame, readBytes);
-			frameBytes = readBytes.toArray();
-			readBytes.release();
-
-			reportRefreshRate();
-		}
-	}
-
-	private long time = 0, refreshes = 0;
-
-	private void reportRefreshRate() {
-		refreshes++;
-		if (time == 0) {
-			time = System.currentTimeMillis();
-		} else {
-			if (refreshes % 100 == 0) {
-				LOGGER.debug(String.format("Refresh rate %d frames/s.",
-						(refreshes * 1000) / (System.currentTimeMillis() - time)));
-				time = refreshes = 0;
+			synchronized (capturedFrame) {
+				device.read(capturedFrame);
+				capturedFrame.copyTo(processedFrame);
 			}
+			fps.refresh();
 		}
 	}
 

@@ -35,7 +35,7 @@ public class VisionController implements HealthIndicator {
 
 	@RequestMapping(value = "/frame", produces = MediaType.IMAGE_JPEG_VALUE)
 	public byte[] getFrame() throws IOException {
-		return agent.scanFrame();
+		return agent.getCapturedFrame();
 	}
 
 }
