@@ -14,7 +14,7 @@ import java.util.Map;
  * @see https://en.wikipedia.org/wiki/Flight_dynamics_(fixed-wing_aircraft)
  * @author armenio.pinto
  */
-public class Orientation {
+public final class Orientation {
 
 	private final int yaw;
 

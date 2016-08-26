@@ -9,7 +9,6 @@ package com.armeniopinto.stress.control.sensorimotor.command
 import spock.lang.*
 
 import nl.jqno.equalsverifier.EqualsVerifier
-import nl.jqno.equalsverifier.Warning
 
 /**
  * Tests {@link GetOrientation}.
