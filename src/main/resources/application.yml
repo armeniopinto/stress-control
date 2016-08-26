@@ -8,4 +8,8 @@ stress:
     keep_alive_period: 5000
     rx_buffer_size: 64
   vision:
+    device_id: 0
+    frame:
+      width: 320
+      height: 240
     refresh_period: 33
